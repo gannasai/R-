@@ -1,0 +1,66 @@
+
+國企系 r06724001 黃仕昌 電影：樂來樂愛你 La la land
+
+
+```{r}
+library(Rfacebook)
+library(ggplot2)
+library(scales)
+library(readxl)
+library(ggpubr)
+```
+
+
+```{r}
+token <- 'EAACEdEose0cBAP5ZAjdt2t08XZAAq5qs2udYFnU87DVWK3mAp8ZBZCUE53kjZBIBaiqZAYaIqGnYc4Cj6rXTxvih5oQoq6eBDSJws7lVuOJUMSxDDpCfzyBZC1wagcI4MVeMT21kVmsSquDR1ahEMFSYNgee3CMzKbrQT73AozuQuTLY5UpQA12rG0usbUz4bDe755532ca2bEMsTggRSrOMJfx6gUfZAvUZD'
+```
+
+- 特定時間的所有貼文
+```{r}
+# 12/9電影上映前到下檔所有貼文
+page <- getPage("485682084951730", token = token, n=300, since='2016/09/01', until = '2017/04/30')
+```
+
+
+```{r}
+## convert Facebook date format to R date format
+format.facebook.date <- function(datestring) {
+  date <- as.POSIXct(datestring, format = "%Y-%m-%dT%H:%M:%S+0000", tz = "GMT")
+}
+# aggregate metric counts over month
+aggregate.metric <- function(metric) {
+  m <- aggregate(page[[paste0(metric, "_count")]], list(month = page$month),
+    mean)
+  m$month <- as.Date(paste0(m$month, "-15"))
+  m$metric <- metric
+  return(m)
+}
+# create data frame with average metric counts per month
+page$datetime <- format.facebook.date(page$created_time)
+page$month <- format(page$datetime, "%Y-%m")
+df.list <- lapply(c("likes", "comments", "shares"), aggregate.metric)
+df <- do.call(rbind, df.list)
+
+# visualize evolution in metric
+## 貼文平均comments, like, share 
+ggplot(df, aes(x = df$month, y = x, group = metric)) +
+  geom_line(aes(color = metric)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y \n %m")+
+  scale_y_log10("Average count per post",
+  breaks = c(0, 10, 100, 500, 1000, 2500, 5000, 10000, 15000))+
+  geom_point()+
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+##累積票房折線圖
+box = read_excel("/Users/owen/Desktop/Ｒ/la la land box.xlsx")
+box$Date = as.Date(box$Date)
+box$`Box Office`= as.numeric(box$`Box Office`)
+ggplot(data = box, aes(Date, `Box Office`))+ 
+  geom_line() +
+  scale_x_date(date_breaks = "2 week", date_labels = "%Y\n%m/%d")+
+  scale_y_log10(breaks = c(1000000,2500000, 5000000,75000000, 10000000, 25000000, 50000000, 100000000, 150000000))+
+  geom_point()+
+  ggtitle("樂來樂愛你 La la land")+
+  theme(plot.title = element_text(hjust = 0.5, family="黑體-繁 中黑"))
+```
