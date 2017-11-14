@@ -1,0 +1,62 @@
+
+國企一 B06704090 黃詩恩 電影：敦克爾克大行動 DUNKIRK
+
+```{r}
+token <- 'EAACEdEose0cBAJAtBTkpX5b7a3Q3wxFAtOWueLhWjRgWShYzLQrRWviuZAxi5CMimuHZCQxhdtB2acT9K9Kg45eZCjopqOX2oSSw8RgGcac8KVlU3fR2Q6fx4uO8KbDKZCKAvhGWpfRhXjynJ6imdg7cizWeQriQnJywK399UZAKB51SZBA7zbams50PXBaZAcZD'
+
+format.facebook.date <- function(datestring) {
+  date <- as.POSIXct(datestring, format = "%Y-%m-%dT%H:%M:%S+0000", tz = "GMT")
+}
+
+aggregate.metric <- function(metric) {
+  m <- aggregate(page[[paste0(metric, "_count")]], list(month = page$month),
+    mean)
+  m$month <- as.Date(paste0(m$month, "-15"))
+  m$metric <- metric
+  return(m)
+}
+```
+
+- 讚數、留言、分享折線圖
+
+```{r}
+library(Rfacebook)
+library(lattice)
+library(dplyr)
+
+page.id <-"955813611180538"
+dun <- getPage(page.id, token = token, n=500, since='2016/12/14', until='2017/08/20')
+
+dun$datetime <- format.facebook.date(dun$created_time)
+dun$month <- format(dun$datetime, "%Y-%m")
+
+df<-data.frame(likes=dun$likes_count,comments=dun$comments_count,share=dun$shares_count,month=dun$month)
+df %>%
+  arrange(desc(df$likes))
+
+plot<-xyplot(likes+comments+share ~ month, df, type = "l",main="DUNKIRK",auto.key = TRUE)
+plot
+```
+
+- 票房折線圖
+
+```{r}
+library(ggplot2)
+library(readxl)
+box = read_excel("C:/Users/user/Desktop/world_box.xlsx")
+box$Date = as.Date(box$Date)
+box$box_office= as.numeric(box$box_office)
+
+ggplot(data = box, aes(Date, box_office))+ 
+  geom_line() +
+  scale_x_date(date_breaks = "2 week", date_labels = "%Y\n%m/%d")+
+  scale_y_log10(breaks = c(2000000,8000000, 100000000,12000000, 20000000, 25000000, 30000000, 35000000, 40000000))+
+  geom_point()+
+  ggtitle("Dunkirk 敦克爾克")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+分析資料後可得知，此片於2016年12月釋出首波正式版預告時，獲得整體最高關注度。
+雖然之後討論度普遍不高，但票房成績仍表現不錯。
+
