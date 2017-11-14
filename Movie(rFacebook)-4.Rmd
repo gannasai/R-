@@ -4,13 +4,14 @@
 library(jiebaR)
 library(tidyverse)
 library(tidytext)
+library(tidyr)
 library(wordcloud2)
 library(readxl)
 library(Rfacebook)
 ```
 
 ```{r}
-token <- 'EAACEdEose0cBAFkad3q06tvs7RwF5LGhT0WikJizXRYPSsF7MQcg0y98TqCbS88DF9scL7lDRNF1BtsZC5YmhQr1a2gSU1hpmQaCBKj7glI7AqfzRZBLxdqUiSDC87uRAOv27PO7YIMpdw3jvjC6mMltI4gV6dHYbo1Juo1lBM093zC4Bm4v7wCEwONgH31ZC4Oo4xwbQZDZD'
+token <- 'EAACEdEose0cBAA7tclAFq7lEHKw6pJvMxwJxxUJPaoA3lpxZBMXiMZCpHZC5xWAxRDvWOOhAiX4lRHsXhHkfuM1SNZAw0jHdFjfQEE4Pd3UtdGKfUWS1Je1ZButECeIK8Ep4NL8NpCkhDlY8ZCe5QXLlOkgZAiFW96Hk8RbekfzSaUbFxFehtWr3KY4xaKQmh4wtZBnyCf0aXgZDZD'
 # 電影上映前到下檔所有貼文
 page <- getPage("hacksawridge", token = token, n=300, since='2016/11/04', until = '2017/03/09')
 ```
@@ -54,8 +55,9 @@ ggplot(df, aes(x = df$month, y = x, group = metric)) +
   theme(axis.title.x = element_blank())
 
 ##票房折線圖
-box = read_excel("Hacksaw box.xlsx")
-#box <- read_csv("Hacksaw box.csv")
+#box = read_excel("https://github.com/gannasai/R-/blob/master/Hacksaw%20box.xlsx")
+box <- read_csv("https://raw.githubusercontent.com/gannasai/R-/master/Hacksaw%20box.csv")
+box <- drop_na(box,Date)
 Sys.setlocale("LC_TIME", "C")
 box$Date = as.Date(box$Date, "%Y %b %d")
 box$`Box Office`= as.numeric(box$`Box Office`)
