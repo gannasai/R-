@@ -1,4 +1,4 @@
-#環工所 林憲瑋 R06541132 電影:牠
+# 環工所 林憲瑋 R06541132 電影:牠
 
 library(Rfacebook)
 library(ggplot2)
@@ -10,10 +10,12 @@ token <- 'EAACEdEose0cBAOrDiPZBDPcPQ7jz1jr8P9sAHB7ArXBgXPIzL5qKwkvPmbzulSgt9fky7
 
 ### 9/8電影上映前到10/27下檔所有貼文
 page <- getPage("1623540471295575", token = token, n=1000, since='2017/09/08', until = '2017/10/27')
-## convert Facebook date format to R date format
+
+### convert Facebook date format to R date format
 format.facebook.date <- function(datestring) {
   date <- as.POSIXct(datestring, format = "%Y-%m-%dT%H:%M:%S+0000", tz = "GMT")
 }
+
 ### aggregate metric counts over month
 aggregate.metric <- function(metric) {
   m <- aggregate(page[[paste0(metric, "_count")]], list(month = page$month),
@@ -22,6 +24,7 @@ aggregate.metric <- function(metric) {
   m$metric <- metric
   return(m)
 }
+
 ### create data frame with average metric counts per month
 page$datetime <- format.facebook.date(page$created_time)
 page$month <- format(page$datetime, "%Y-%m")
@@ -29,7 +32,8 @@ df.list <- lapply(c("likes", "comments", "shares"), aggregate.metric)
 df <- do.call(rbind, df.list)
 
 ### visualize evolution in metric
-## 貼文平均comments, like, share 
+
+### 貼文平均comments, like, share 
 ggplot(df, aes(x = df$month, y = x, group = metric)) +
   geom_line(aes(color = metric)) +
   scale_x_date(date_breaks = "1 month", date_labels = "%Y \n %m")+
@@ -39,4 +43,4 @@ ggplot(df, aes(x = df$month, y = x, group = metric)) +
   theme_bw() +
   theme(axis.title.x = element_blank())
 
-###可以得知，一開始貼文的Like數最高，分享次之，給予的評論最少，但隨上映時間越久，討論度也都會逐漸降低
+### 可以得知，一開始貼文的Like數最高，分享次之，給予的評論最少，但隨上映時間越久，討論度也都會逐漸降低
