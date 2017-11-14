@@ -1,4 +1,4 @@
-# 環工所 林憲瑋 R06541132 電影:牠
+# 環工所 林憲瑋 R06541132  電影 : 牠
 
 library(Rfacebook)
 library(ggplot2)
