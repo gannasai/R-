@@ -1,0 +1,74 @@
+> R05943114 電子所 吳俊易 鋼鐵英雄 Hacksaw Ridge
+
+```{r}
+library(jiebaR)
+library(tidyverse)
+library(tidytext)
+library(wordcloud2)
+library(readxl)
+library(Rfacebook)
+```
+
+```{r}
+token <- 'EAACEdEose0cBAFkad3q06tvs7RwF5LGhT0WikJizXRYPSsF7MQcg0y98TqCbS88DF9scL7lDRNF1BtsZC5YmhQr1a2gSU1hpmQaCBKj7glI7AqfzRZBLxdqUiSDC87uRAOv27PO7YIMpdw3jvjC6mMltI4gV6dHYbo1Juo1lBM093zC4Bm4v7wCEwONgH31ZC4Oo4xwbQZDZD'
+# 電影上映前到下檔所有貼文
+page <- getPage("hacksawridge", token = token, n=300, since='2016/11/04', until = '2017/03/09')
+```
+
+
+```{r}
+## convert Facebook date format to R date format
+format.facebook.date <- function(datestring) {
+  date <- as.POSIXct(datestring, format = "%Y-%m-%dT%H:%M:%S+0000", tz = "GMT")
+}
+# aggregate metric counts over month
+aggregate.metric <- function(metric) {
+  m <- aggregate(page[[paste0(metric, "_count")]], list(month = page$month),
+    mean)
+  m$month <- as.Date(paste0(m$month, "-4"))
+  m$metric <- metric
+  return(m)
+}
+# create data frame with average metric counts per month
+page$datetime <- format.facebook.date(page$created_time)
+page$month <- format(page$datetime, "%Y-%m")
+df.list <- lapply(c("likes", "comments", "shares"), aggregate.metric)
+df <- do.call(rbind, df.list)
+
+#最多like文章類型
+like_page <- page %>%
+              arrange(desc(likes_count))
+#like_page <- like_page[,5]
+like_page <- select(like_page, one_of(c("type", "likes_count", "datetime")))
+head(like_page,10)
+
+# visualize evolution in metric
+## 貼文平均comments, like, share 
+ggplot(df, aes(x = df$month, y = x, group = metric)) +
+  geom_line(aes(color = metric)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y \n %m")+
+  scale_y_log10("Average count per post",
+  breaks = c(0, 10, 100, 500, 1000, 2500, 5000, 10000, 15000))+
+  geom_point()+
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+##票房折線圖
+box = read_excel("Hacksaw box.xlsx")
+#box <- read_csv("Hacksaw box.csv")
+Sys.setlocale("LC_TIME", "C")
+box$Date = as.Date(box$Date, "%Y %b %d")
+box$`Box Office`= as.numeric(box$`Box Office`)
+ggplot(data = box, aes(Date, `Box Office`))+ 
+  geom_line() +
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y\n%m/%d")+
+  scale_y_log10(breaks = c(1000000,2500000, 5000000,75000000, 10000000, 25000000, 50000000, 100000000, 150000000))+
+  geom_point()+
+  ggtitle("Hacksaw ridge")+
+  theme(plot.title = element_text(hjust = 0.5, family="黑體-繁 中黑"))
+```
+ 
+>貼文分享數，隨著上映時間而減少，與票房有相似的趨勢
+
+>按讚數則不受時間影響，且最多讚數都為影片貼文，可見影片貼文有其優勢
+
