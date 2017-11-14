@@ -64,3 +64,4 @@ ggplot(data = box, aes(Date, `Box Office`))+
   ggtitle("樂來樂愛你 La la land")+
   theme(plot.title = element_text(hjust = 0.5, family="黑體-繁 中黑"))
 ```
+由圖可知，電影在12/9上映之後，按讚數迅速上升，達到最高點時是在隔年1月中，此時票房上升速度也達到最快，從此票房成長也趨於緩慢，按讚、評論、分享的數量也隨著電影上映時間越久愈來愈少。
