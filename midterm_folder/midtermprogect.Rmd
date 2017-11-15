@@ -1,0 +1,194 @@
+熱門電影大探索！
+------------------------
+#### 國企一 B06704090 黃詩恩
+#### 電子所 R05943114 吳俊易 
+#### 國企系 r06724001 黃仕昌
+#### 環工所 R06541132 林憲瑋 
+#### 地理四 b03208045 劉品吟
+
+-------------------------
+> 透過抓取臉書上的熱門電影資料，我們發現，熱門電影大致上可以分成兩種型態。
+
+> 一種是名聲和廣告很大的強檔，所以在剛上映時，按讚數、分享數和評論數都在最高，上映之後關注度就開始漸漸往下掉。
+
+> 另一種是比較屬於沒那麼強檔，但隨著越來越多人去看，關注度越來越高，被公認為好看的電影，即使最起初按讚數和分享數還沒那麼多，但是上映一段時間先升後降。
+
+```{r include = FALSE}
+library(jiebaR)
+library(tidyverse)
+library(tidytext)
+library(tidyr)
+library(readr)
+library(httr)
+library(rjson)
+library(httpuv)
+library(Rfacebook)
+library(ggplot2)
+library(scales)
+library(readxl)
+library(ggpubr)
+library(lattice)
+library(dplyr)
+```
+
+```{r echo = FALSE}
+token <- 'EAACEdEose0cBAIVM63zdkizt1yI69WqIZCqbziVzTAhKwcBecRprdMBhmziV2bUt6fNXMjq6lYVi0yp0FhBQZACO9Mi82lOZASHqQvZAmv5P2gZB6fa5mAoEFwsm1gSsELACNCrRqoHSiJikxfefATmTEGNv3MbxHHZCi2EZATSFeZCExv93pizqk5FtcQifDukZD'
+```
+
+
+#1.樂來樂愛你la la land
+```{r results = "hide"}
+# lalaland
+page1 <- getPage("485682084951730", token = token, n=300, since='2016/09/01', until = '2017/04/30')
+```
+
+```{r}
+format.facebook.date <- function(datestring) {
+  date <- as.POSIXct(datestring, format = "%Y-%m-%dT%H:%M:%S+0000", tz = "GMT")
+}
+aggregate.metric <- function(metric) {
+  m <- aggregate(page1[[paste0(metric, "_count")]], list(month = page1$month),
+    mean)
+  m$month <- as.Date(paste0(m$month, "-15"))
+  m$metric <- metric
+  return(m)
+}
+# create data frame with average metric counts per month
+page1$datetime <- format.facebook.date(page1$created_time)
+page1$month <- format(page1$datetime, "%Y-%m")
+df.list <- lapply(c("likes", "comments", "shares"), aggregate.metric)
+df <- do.call(rbind, df.list)
+
+# visualize evolution in metric
+## 貼文平均comments, like, share 
+ggplot(df, aes(x = df$month, y = x, group = metric)) +
+  geom_line(aes(color = metric)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y \n %m")+
+  scale_y_log10("Average count per post",
+  breaks = c(0, 10, 100, 500, 1000, 2500, 5000, 10000, 15000))+
+  geom_point()+
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+```
+
+
+### 由圖可知，電影在12/9上映之後，按讚數迅速上升，達到最高點時是在隔年1月中，此時票房上升速度也達到最快，從此票房成長也趨於緩慢，按讚、評論、分享的數量也隨著電影上映時間越久愈來愈少。
+
+
+ 
+ 
+
+#2.鋼鐵英雄 Hacksaw Ridge
+```{r results = "hide"}
+page2 <- getPage("hacksawridge", token = token, n=300, since='2016/11/04', until = '2017/03/09')
+```
+
+```{r}
+# aggregate metric counts over month
+aggregate.metric2 <- function(metric) {
+  m <- aggregate(page2[[paste0(metric, "_count")]], list(month = page2$month),
+    mean)
+  m$month <- as.Date(paste0(m$month, "-4"))
+  m$metric <- metric
+  return(m)
+}
+# create data frame with average metric counts per month
+page2$datetime <- format.facebook.date(page2$created_time)
+page2$month <- format(page2$datetime, "%Y-%m")
+df.list2 <- lapply(c("likes", "comments", "shares"), aggregate.metric2)
+df2 <- do.call(rbind, df.list)
+
+#最多like文章類型
+like_page <- page2 %>%
+              arrange(desc(likes_count))
+#like_page <- like_page[,5]
+like_page <- select(like_page, one_of(c("type", "likes_count", "datetime")))
+head(like_page,10)
+
+# visualize evolution in metric
+## 貼文平均comments, like, share 
+ggplot(df2, aes(x = df2$month, y = x, group = metric)) +
+  geom_line(aes(color = metric)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y \n %m")+
+  scale_y_log10("Average count per post",
+  breaks = c(0, 10, 100, 500, 1000, 2500, 5000, 10000, 15000))+
+  geom_point()+
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+```
+
+
+### 貼文分享數，隨著上映時間而減少，與票房有相似的趨勢
+### 按讚數則不受時間影響，且最多讚數都為影片貼文，可見影片貼文有其優勢
+
+
+
+
+#3.敦克爾克大行動 DUNKIRK
+```{r results = "hide"}
+page.id <-"955813611180538"
+page3 <- getPage(page.id, token = token, n=500, since='2016/12/14', until='2017/08/20')
+
+```
+
+```{r}
+aggregate.metric3 <- function(metric) {
+  m <- aggregate(page3[[paste0(metric, "_count")]], list(month = page3$month),
+    mean)
+  m$month <- as.Date(paste0(m$month, "-15"))
+  m$metric <- metric
+  return(m)
+}
+
+page3$datetime <- format.facebook.date(page3$created_time)
+page3$month <- format(page3$datetime, "%Y-%m")
+
+df.list3 <- lapply(c("likes", "comments", "shares"), aggregate.metric3) 
+df3 <- do.call(rbind, df.list3)
+
+ggplot(df3, aes(x = df3$month, y = x, group = metric)) + 
+  geom_line(aes(color = metric)) + 
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y \n %m")+
+  scale_y_log10("Average count per post", breaks = c(0, 10, 100, 500, 1000, 2500, 5000, 10000, 15000))+
+  geom_point()+ 
+  theme_bw() + 
+  theme(axis.title.x = element_blank())
+```
+
+### 分析資料後可得知，此片於2016年12月釋出首波正式版預告時，獲得整體最高關注度。 雖然之後討論度普遍不高，但票房成績仍表現不錯
+
+
+
+
+#4.牠
+
+```{r results = "hide"}
+page4 <- getPage("1623540471295575", token = token, n=300, since='2017/08/01', until = '2017/11/15')
+```
+
+
+```{r}
+
+aggregate.metric4 <- function(metric) { 
+  m <- aggregate(page4[[paste0(metric, "_count")]], list(month = page4$month), mean)
+  m$month <- as.Date(paste0(m$month, "-15")) 
+  m$metric <- metric 
+  return(m) 
+  }
+
+page4$datetime <- format.facebook.date(page4$created_time) 
+page4$month <- format(page4$datetime, "%Y-%m") 
+df.list4 <- lapply(c("likes", "comments", "shares"), aggregate.metric4) 
+df4 <- do.call(rbind, df.list4)
+
+ggplot(df4, aes(x = df4$month, y = x, group = metric)) + 
+  geom_line(aes(color = metric)) + 
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y \n %m")+
+  scale_y_log10("Average count per post", breaks = c(0, 10, 100, 500, 1000, 2500, 5000, 10000, 15000))+
+  geom_point()+ 
+  theme_bw() + 
+  theme(axis.title.x = element_blank())
+```
+
+### 可以得知，一開始貼文的Like數最高，分享次之，給予的評論最少，但隨上映時間越久，討論度也都會逐漸降低
+
