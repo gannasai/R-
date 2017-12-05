@@ -1,0 +1,44 @@
+
+#團體作業：總統的語言行為 Group 9
+
+####地理系 大四 b03208045 劉品吟
+####國企所 碩一 r06724001 黃仕昌
+####國企系 大一 b06704090 黃詩恩
+####環工所 碩一 r06541132 林憲瑋
+####電子所 碩二 r05943114 吳俊易
+
+```{r env.setup, echo=TRUE, message=FALSE, warning=FALSE}
+library(quanteda)
+library(tm)
+library(readr)
+library(jiebaR)
+library(readtext)
+library(tidyverse)
+```
+
+####本組探討了歷屆美國總統哪位最多話 (tokens)，用字量最豐富 (types)結果發現最多話與用字最豐富的都是1841年的Harrison。根據後來查證，Harrison是在雷根之前美國歷年來最老的總統，上任時已68歲，而在1841年3月4日就職當天，下著雨，但Harrison在遊行途中拒絕戴帽子或穿外套，也拒絕縮短就職演講，他的演講是歷史上最長的就職演講。
+
+```{r, echo=TRUE}
+a = readtext::readtext("/Users/owen/Desktop/Ｒ/Week12/usP/*.txt")
+data_corpus = corpus(a)
+data_final = data.frame(summary(data_corpus))
+data_final = data_final %>% arrange(desc(Tokens))
+data_final
+data_final2 = data.frame(summary(data_corpus))
+data_final2 = data_final %>% arrange(desc(Types))
+data_final2
+ggplot(data_final, aes(x = doc_id, y = Tokens, group = 1)) + geom_line() + geom_point() +
+        scale_x_discrete(labels = c(seq(1789,2012,12)), breaks = seq(1789,2012,12) )
+ggplot(data_final2, aes(x = doc_id, y = Types, group = 1)) + geom_line() + geom_point() +
+        scale_x_discrete(labels = c(seq(1789,2012,12)), breaks = seq(1789,2012,12) )
+```
+
+
+####本組同時也分析了今年才上任的Trump總統，意外地發現Trump的話與用字量竟然不多，Trump是美國45任總統中，第30位少話的總統，用字量也排在第28位，與平常給人話很多的印象不相同。
+```{r, echo=TRUE}
+b = readtext("/Users/owen/Desktop/Ｒ/Week12/usP/Trump.txt")
+data_corpus2 = corpus(b)
+data_final3 = data.frame(summary(data_corpus2))
+data_final3
+```
+
